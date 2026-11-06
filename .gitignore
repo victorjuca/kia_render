@@ -1,0 +1,7 @@
+target/
+.env
+gdrive3/
+fuentes/
+*.log
+nbproject/private/
+.idea/

@@ -1,0 +1,21 @@
+# docker compose up -d --build     (logs: docker compose logs -f)
+services:
+  kia-render:
+    build: .
+    image: kia-render
+    container_name: kia-render
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # dentro del contenedor (los volumenes de abajo); el .env puede traer las de Windows
+      PATH_MAIN: /data/karaoke_ia
+      KIA_TEMP: /data/kia_temp
+      RECURSOS_DIR: /app/recursos
+    ports:
+      - "8081:8080"            # http://localhost:8081/api/estado
+    volumes:
+      - "C:/kia_colaboradores_online/karaoke_ia:/data/karaoke_ia"
+      - "C:/kia_main/kia_temp:/data/kia_temp"
+      - "./gdrive3:/root/.config/gdrive3"                 # cuenta de gdrive (ver README)
+      - "./fuentes:/usr/share/fonts/truetype/kia:ro"      # fuentes de los proyectos (Arial Black, etc.)
+    stop_grace_period: 30s

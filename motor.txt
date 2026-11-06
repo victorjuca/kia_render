@@ -1,0 +1,21 @@
+# Archivos del motor de render que se copian tal cual desde kia/src/kia/claude (sincroniza-motor.ps1 / .sh)
+Studio.java
+Renderer.java
+PreviewPanel.java
+Mp4.java
+Audio.java
+AudioEngine.java
+Lyr.java
+Ini.java
+Kfn.java
+U.java
+Props.java
+Ev.java
+Line.java
+Page.java
+Unit.java
+Block.java
+TextUndo.java
+ProyectoSongIni.java
+Whisper.java
+acomodo

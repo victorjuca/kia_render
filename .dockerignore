@@ -1,0 +1,6 @@
+target/
+.env
+gdrive3/
+fuentes/
+.git/
+*.log

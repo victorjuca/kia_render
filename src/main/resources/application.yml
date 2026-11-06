@@ -1,0 +1,48 @@
+# Todo se configura con variables de entorno (docker compose: archivo .env).
+# Fuera de Docker se lee tambien el archivo .env de la carpeta del servicio.
+spring:
+  application:
+    name: kia-render
+  config:
+    import: optional:file:.env[.properties]
+  main:
+    banner-mode: off
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kia}?ApplicationName=kia-render
+    username: ${DB_USER:}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 15000
+      initialization-fail-timeout: -1   # arranca aunque la base no responda; reintenta en cada vuelta
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+kia:
+  maquina-id: ${WORKER_MAQUINA_ID:}
+  path-main: ${PATH_MAIN:C:/kia_colaboradores_online/karaoke_ia}
+  path-main-alias: ${PATH_MAIN_ALIAS:C:\kia_colaboradores_online\karaoke_ia;C:\kia_colaboradores_online\KARAOKE IA;C:\kia_colaboradores_online_beta\karaoke_ia;C:\kia_colaboradores_online_beta\KARAOKE IA}
+  kia-temp: ${KIA_TEMP:C:/kia_main/kia_temp}
+  recursos-dir: ${RECURSOS_DIR:recursos}
+  ffmpeg: ${FFMPEG:ffmpeg}
+  gdrive: ${GDRIVE:gdrive}
+  drive-habilitado: ${DRIVE_HABILITADO:true}
+  segundo-inicio-join: ${SEGUNDO_INICIO_JOIN:8}
+  intervalo-seg: ${INTERVALO_SEG:10}
+  un-proceso-por-maquina: ${UN_PROCESO_POR_MAQUINA:true}
+  whisper-probabilidad: ${WHISPER_PROBABILIDAD:0.60}
+
+logging:
+  level:
+    root: WARN
+    kia.render: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{0}: %msg%n"
