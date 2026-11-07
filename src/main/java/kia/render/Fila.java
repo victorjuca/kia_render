@@ -78,21 +78,34 @@ public class Fila {
                     if (rs.next()) return false;  // ya registrada
                 }
             }
-            // insertar
+            // insertar maquina y obtener su id
             String nombrePc;
             try { nombrePc = InetAddress.getLocalHost().getHostName(); }
             catch (Exception e) { nombrePc = "kia-render"; }
             String nombreUsuario = System.getProperty("user.name", "render");
             String so = System.getProperty("os.name", "");
             String sobrenombre = nombrePc + " (" + so + ")";
+            int maquinaIdDb = -1;
             try (PreparedStatement ps = cn.prepareStatement(
                     "INSERT INTO maquina (mac, nombre_pc, nombre_usuario, is_procesador, sobrenombre, usuario_id) " +
-                    "VALUES (?, ?, ?, true, ?, 1)")) {
+                    "VALUES (?, ?, ?, true, ?, 1) RETURNING id")) {
                 ps.setString(1, cfg.getMaquinaId());
                 ps.setString(2, nombrePc);
                 ps.setString(3, nombreUsuario);
                 ps.setString(4, sobrenombre);
-                ps.executeUpdate();
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) maquinaIdDb = rs.getInt(1);
+                }
+            }
+            // vincular tipo de proceso 2 (Renderizar KFN) en maquina_proceso
+            if (maquinaIdDb > 0) {
+                try (PreparedStatement ps = cn.prepareStatement(
+                        "INSERT INTO maquina_proceso (maquina, tipoproceso, procesa, numejecuta) " +
+                        "VALUES (?, ?, true, 1) ON CONFLICT DO NOTHING")) {
+                    ps.setInt(1, maquinaIdDb);
+                    ps.setInt(2, TIPO_RENDERIZAR);  // tipo 2
+                    ps.executeUpdate();
+                }
             }
             return true;
         } catch (Exception e) {
