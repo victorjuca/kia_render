@@ -46,6 +46,9 @@ public class RenderWorker {
     void arranca() {
         faltan = Recursos.configura(cfg);
         if (faltan.isEmpty()) {
+            if (fila.registrarSiNueva()) {
+                log.info("Maquina registrada automaticamente en la DB: {}", cfg.getMaquinaId());
+            }
             log.info("kia-render iniciado. Máquina: {} | Proyectos: {} | Temporales: {} | Drive: {}",
                     cfg.getMaquinaId(), cfg.getPathMain(), cfg.getKiaTemp(), cfg.isDriveHabilitado() ? "sí" : "NO (pruebas)");
         } else {

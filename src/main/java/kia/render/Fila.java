@@ -1,6 +1,7 @@
 package kia.render;
 
 import java.sql.Array;
+import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -62,6 +63,43 @@ public class Fila {
     }
 
     // ------------------------------------------------------------------ fila
+
+    /**
+     * Si esta maquina (maquinaId) no existe en la tabla maquina, la registra automaticamente.
+     * @return true si la registro ahora, false si ya existia.
+     */
+    public boolean registrarSiNueva() {
+        try (Connection cn = ds.getConnection()) {
+            // verificar si ya existe
+            try (PreparedStatement ps = cn.prepareStatement(
+                    "SELECT id FROM maquina WHERE mac = ?")) {
+                ps.setString(1, cfg.getMaquinaId());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return false;  // ya registrada
+                }
+            }
+            // insertar
+            String nombrePc;
+            try { nombrePc = InetAddress.getLocalHost().getHostName(); }
+            catch (Exception e) { nombrePc = "kia-render"; }
+            String nombreUsuario = System.getProperty("user.name", "render");
+            String so = System.getProperty("os.name", "");
+            String sobrenombre = nombrePc + " (" + so + ")";
+            try (PreparedStatement ps = cn.prepareStatement(
+                    "INSERT INTO maquina (mac, nombre_pc, nombre_usuario, is_procesador, sobrenombre, usuario_id) " +
+                    "VALUES (?, ?, ?, true, ?, 1)")) {
+                ps.setString(1, cfg.getMaquinaId());
+                ps.setString(2, nombrePc);
+                ps.setString(3, nombreUsuario);
+                ps.setString(4, sobrenombre);
+                ps.executeUpdate();
+            }
+            return true;
+        } catch (Exception e) {
+            log.warn("No se pudo verificar/registrar la maquina en la DB: {}", e.getMessage());
+            return false;
+        }
+    }
 
     public Retorno esProcesadora() throws SQLException {
         return arreglo("select * from sps_procesadora(?)", cfg.getMaquinaId());
