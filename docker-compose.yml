@@ -14,7 +14,7 @@ services:
     ports:
       - "8081:8080"            # http://localhost:8081/api/estado
     volumes:
-      - "C:/kia_colaboradores_online/karaoke_ia:/data/karaoke_ia"
+      - "C:/kia_main/kia_proyectos:/data/karaoke_ia"
       - "C:/kia_main/kia_temp:/data/kia_temp"
       - "./gdrive3:/root/.config/gdrive3"                 # cuenta de gdrive (ver README)
       - "./fuentes:/usr/share/fonts/truetype/kia:ro"      # fuentes de los proyectos (Arial Black, etc.)

@@ -36,9 +36,12 @@ public class RenderService {
     private final Drive drive;
     private final RenderProperties cfg;
     private final SongIniBase songIni;
+    private final ProyectoDrive proyectoDrive;
 
-    public RenderService(Fila fila, FFmpeg ff, Portada portada, Drive drive, RenderProperties cfg, SongIniBase songIni) {
+    public RenderService(Fila fila, FFmpeg ff, Portada portada, Drive drive, RenderProperties cfg, SongIniBase songIni,
+            ProyectoDrive proyectoDrive) {
         this.songIni = songIni;
+        this.proyectoDrive = proyectoDrive;
         this.fila = fila;
         this.ff = ff;
         this.portada = portada;
@@ -82,6 +85,13 @@ public class RenderService {
     }
 
     private void genera(Proyecto proy, Fila.Cancion c, File[] finales, Consumer<String> progreso, BooleanSupplier cancelado) throws Exception {
+        // lo que falte en esta maquina (cancion agregada desde otro equipo) se baja de su proyecto en Drive
+        List<String> bajados = proyectoDrive.asegura(proy.carpeta(), List.of(Proyecto.MP3, Proyecto.INSTRUMENTAL, Proyecto.INSTRUMENTAL_SV,
+                Proyecto.PORTADA, "fondo.png"), c.tema() + " (" + proy.key() + ")");
+        if (!bajados.isEmpty()) {
+            progreso.accept("Bajados de Drive: " + String.join(", ", bajados));
+        }
+        revisaDuraciones(proy, c);
         File songIni = proy.songIni();
         if (!kia.claude.ProyectoSongIni.existe(songIni)) {
             throw new IOException("La canción " + proy.key() + " todavía no tiene Song.ini (letra) en la base");
@@ -165,8 +175,37 @@ public class RenderService {
                 }
             }
         }
-        throw new IOException("No se encontró el proyecto (formato KARAOKE IA/KEY con main.mp3) de " + p.path()
+        // no esta en esta maquina (se agrego desde otro equipo): se baja de su proyecto en Drive
+        String key = carpeta != null && Proyecto.esKey(carpeta.getName()) ? carpeta.getName()
+                : p.cancionId() != null && p.cancionId() > 0 ? fila.cancionPorId(p.cancionId()).map(Fila.Cancion::key).orElse(null) : null;
+        if (key != null && Proyecto.esKey(key)) {
+            Proyecto local = Proyecto.deKey(cfg.getPathMain(), key);
+            log.info("El proyecto {} no está en esta máquina: se busca en Drive", local.key());
+            proyectoDrive.asegura(local.carpeta(), List.of(Proyecto.MP3), local.key());
+            if (local.existe()) {
+                return local;
+            }
+        }
+        throw new IOException("No se encontró el proyecto (formato KARAOKE IA/KEY con main.mp3) en esta máquina ni en Drive: " + p.path()
                 + ". Los proyectos del formato anterior se renderizan desde kia.");
+    }
+
+    /** Avisa en el log si la principal y los instrumentales no duran lo mismo (el karaoke quedaria desfasado). */
+    private void revisaDuraciones(Proyecto proy, Fila.Cancion c) {
+        try {
+            double principal = ff.duracion(proy.mp3());
+            for (File f : proy.instrumentales()) {
+                if (f.isFile() && f.length() > 0) {
+                    double d = ff.duracion(f);
+                    if (Math.abs(d - principal) > 0.5) {
+                        log.warn("OJO {} ({}): {} dura {} s y main.mp3 {} s", c.tema(), proy.key(), f.getName(),
+                                String.format(Locale.ROOT, "%.1f", d), String.format(Locale.ROOT, "%.1f", principal));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            log.debug("No se pudieron comparar las duraciones de {}", proy.key(), e);
+        }
     }
 
     private java.util.Optional<Fila.Cancion> porId(Integer id) {

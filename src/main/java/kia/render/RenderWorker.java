@@ -105,7 +105,8 @@ public class RenderWorker {
         enCurso = p;
         inicio = Instant.now();
         paso = "Iniciando";
-        log.info("== Renderizar #{}: {}", p.id(), p.path());
+        String nombre = etiqueta(p);
+        log.info("== Renderizar #{}: {}", p.id(), nombre);
         try {
             render.renderiza(p, m -> {
                 paso = m;
@@ -115,12 +116,12 @@ public class RenderWorker {
                 return;   // detener() ya lo marco con error
             }
             fila.terminar(p);
-            log.info("== Terminado #{} en {} s", p.id(), Duration.between(inicio, Instant.now()).toSeconds());
+            log.info("== Terminado #{} {} en {} s", p.id(), nombre, Duration.between(inicio, Instant.now()).toSeconds());
         } catch (Exception e) {
             if (deteniendo.get()) {
                 return;
             }
-            log.error("Error en el proceso #{}", p.id(), e);
+            log.error("Error en el proceso #{} ({})", p.id(), nombre, e);
             fila.error(p.id(), "Error en Renderizar (kia-render): " + e.getMessage());
         } finally {
             enCurso = null;
@@ -136,8 +137,28 @@ public class RenderWorker {
         Fila.Proceso p = enCurso;
         if (p != null) {
             fila.error(p.id(), "kia-render se detuvo a la mitad del proceso; reinícialo.");
-            log.warn("Detenido a la mitad del proceso #{}", p.id());
+            log.warn("Detenido a la mitad del proceso #{} ({})", p.id(), etiqueta(p));
         }
+    }
+
+    /** "Artista - Cancion (KEY)" del proceso para los logs; si no se encuentra en la base, la ruta. */
+    private String etiqueta(Fila.Proceso p) {
+        try {
+            Optional<Fila.Cancion> c = p.cancionId() != null && p.cancionId() > 0 ? fila.cancionPorId(p.cancionId()) : Optional.empty();
+            if (c.isEmpty()) {
+                java.io.File f = Proyecto.resolver(p.path(), cfg.getPathMain(), cfg.getPathMainAlias());
+                java.io.File carpeta = f.getParentFile();
+                if (carpeta != null && Proyecto.esKey(carpeta.getName())) {
+                    c = fila.cancionPorKey(carpeta.getName());
+                }
+            }
+            if (c.isPresent()) {
+                return c.get().tema() + " (" + c.get().key() + ")";
+            }
+        } catch (Exception e) {
+            log.debug("No se pudo armar el nombre de la canción del proceso {}", p.id(), e);
+        }
+        return p.path();
     }
 
     public Estado estado() {

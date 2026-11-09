@@ -11,9 +11,9 @@ public class RenderProperties {
     /** Columna mac de la tabla maquina. Vacio en Windows: el mismo identificador que usa kia. */
     private String maquinaId = "";
     /** Carpeta de proyectos (PATH_MAIN de kia) en este equipo / contenedor. */
-    private String pathMain = "C:\\kia_colaboradores_online\\karaoke_ia";
+    private String pathMain = "C:\\kia_main\\kia_proyectos";
     /** Raices con las que se guardaron las rutas en bitacora_proceso, separadas por ';' (igual que kia-worker-ia). */
-    private String pathMainAlias = "C:\\kia_colaboradores_online\\karaoke_ia;C:\\kia_colaboradores_online\\KARAOKE IA;"
+    private String pathMainAlias = "C:\\kia_main\\kia_proyectos;C:\\kia_colaboradores_online\\karaoke_ia;C:\\kia_colaboradores_online\\KARAOKE IA;"
             + "C:\\kia_colaboradores_online_beta\\karaoke_ia;C:\\kia_colaboradores_online_beta\\KARAOKE IA";
     /** Temporales (fuera de la carpeta de Drive). */
     private String kiaTemp = "C:\\kia_main\\kia_temp";

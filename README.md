@@ -59,7 +59,7 @@ Fuera de Docker el `.env` se lee como `.properties`, así que usa `/` en las rut
 |---|---|---|
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | `localhost`, `5432`, `kia` | base de kia |
 | `WORKER_MAQUINA_ID` | vacío | columna `mac` de la tabla `maquina`. Vacío en Windows = el mismo identificador que kia. **Obligatorio en Docker**; usa el mismo que kia-worker-ia |
-| `PATH_MAIN` | `C:/kia_colaboradores_online/karaoke_ia` | carpeta de proyectos |
+| `PATH_MAIN` | `C:/kia_main/kia_proyectos` | carpeta de proyectos |
 | `PATH_MAIN_ALIAS` | rutas `kia_colaboradores_online(_beta)\karaoke_ia` y `KARAOKE IA` | rutas de Windows guardadas en la base que se traducen a `PATH_MAIN` (separadas por `;`) |
 | `KIA_TEMP` | `C:/kia_main/kia_temp` | temporales |
 | `RECURSOS_DIR` | `recursos` | fondos y `sin_audio.mp3` |
@@ -94,7 +94,7 @@ docker compose logs -f
 
 | En el equipo | En el contenedor | Para |
 |---|---|---|
-| `C:/kia_colaboradores_online/karaoke_ia` | `/data/karaoke_ia` | proyectos (`PATH_MAIN`) |
+| `C:/kia_main/kia_proyectos` | `/data/karaoke_ia` | proyectos (`PATH_MAIN`) |
 | `C:/kia_main/kia_temp` | `/data/kia_temp` | temporales |
 | `./gdrive3` | `/root/.config/gdrive3` | cuenta de gdrive |
 | `./fuentes` | `/usr/share/fonts/truetype/kia` | fuentes de las letras |

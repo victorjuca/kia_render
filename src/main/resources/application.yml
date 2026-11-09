@@ -28,8 +28,8 @@ management:
 
 kia:
   maquina-id: ${WORKER_MAQUINA_ID:}
-  path-main: ${PATH_MAIN:C:/kia_colaboradores_online/karaoke_ia}
-  path-main-alias: ${PATH_MAIN_ALIAS:C:\kia_colaboradores_online\karaoke_ia;C:\kia_colaboradores_online\KARAOKE IA;C:\kia_colaboradores_online_beta\karaoke_ia;C:\kia_colaboradores_online_beta\KARAOKE IA}
+  path-main: ${PATH_MAIN:C:/kia_main/kia_proyectos}
+  path-main-alias: ${PATH_MAIN_ALIAS:C:\kia_main\kia_proyectos;C:\kia_colaboradores_online\karaoke_ia;C:\kia_colaboradores_online\KARAOKE IA;C:\kia_colaboradores_online_beta\karaoke_ia;C:\kia_colaboradores_online_beta\KARAOKE IA}
   kia-temp: ${KIA_TEMP:C:/kia_main/kia_temp}
   recursos-dir: ${RECURSOS_DIR:recursos}
   ffmpeg: ${FFMPEG:ffmpeg}

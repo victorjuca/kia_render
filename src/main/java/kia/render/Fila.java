@@ -186,6 +186,32 @@ public class Fila {
         return Optional.empty();
     }
 
+    // ------------------------------------------------------------------ archivos de proyectos en Drive (version_2.2.sql de kia)
+
+    public record ArchivoProyecto(String driveId, String md5, int version, boolean borrado) {
+    }
+
+    public String parametro(String nombre) throws SQLException {
+        try (Connection c = ds.getConnection(); PreparedStatement ps = c.prepareStatement("select valor from parametro where nombre = ?")) {
+            ps.setString(1, nombre);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
+    }
+
+    /** Ultima version de KEY/nombre en el indice proyecto_archivo; null si no esta. */
+    public ArchivoProyecto archivoProyecto(String key, String nombre) throws SQLException {
+        try (Connection c = ds.getConnection(); PreparedStatement ps = c.prepareStatement(
+                "select drive_id, md5, version, borrado from sps_proyecto_archivos(?) where nombre = ?")) {
+            ps.setString(1, key.trim().toUpperCase());
+            ps.setString(2, nombre);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? new ArchivoProyecto(rs.getString(1), rs.getString(2), rs.getInt(3), rs.getBoolean(4)) : null;
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ urls (Drive)
 
     /** Id de Drive registrado para la cancion y el tipo de url (10 Limpia, 9 Segunda Voz). */
