@@ -64,53 +64,66 @@ public class Fila {
 
     // ------------------------------------------------------------------ fila
 
+    /** Resultado del registro al arrancar: si la maquina se dio de alta ahora y si se le vinculo Renderizar. */
+    public record Registro(boolean nueva, boolean vinculada) {
+    }
+
     /**
-     * Si esta maquina (maquinaId) no existe en la tabla maquina, la registra automaticamente.
-     * @return true si la registro ahora, false si ya existia.
+     * Al arrancar: si esta maquina (maquinaId) no existe en la tabla maquina la da de alta, y en cualquier caso le
+     * vincula en maquina_proceso el tipo Renderizar (2) si le falta. Si ya estaba vinculado no se toca (si en la
+     * pantalla Maquinas se desactivo, se respeta).
      */
-    public boolean registrarSiNueva() {
+    public Registro registrarMaquina() {
         try (Connection cn = ds.getConnection()) {
-            // verificar si ya existe
-            try (PreparedStatement ps = cn.prepareStatement(
-                    "SELECT id FROM maquina WHERE mac = ?")) {
-                ps.setString(1, cfg.getMaquinaId());
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) return false;  // ya registrada
-                }
-            }
-            // insertar maquina y obtener su id
-            String nombrePc;
-            try { nombrePc = InetAddress.getLocalHost().getHostName(); }
-            catch (Exception e) { nombrePc = "kia-render"; }
-            String nombreUsuario = System.getProperty("user.name", "render");
-            String so = System.getProperty("os.name", "");
-            String sobrenombre = nombrePc + " (" + so + ")";
             int maquinaIdDb = -1;
-            try (PreparedStatement ps = cn.prepareStatement(
-                    "INSERT INTO maquina (mac, nombre_pc, nombre_usuario, is_procesador, sobrenombre, usuario_id) " +
-                    "VALUES (?, ?, ?, true, ?, 1) RETURNING id")) {
+            try (PreparedStatement ps = cn.prepareStatement("SELECT id FROM maquina WHERE mac = ?")) {
                 ps.setString(1, cfg.getMaquinaId());
-                ps.setString(2, nombrePc);
-                ps.setString(3, nombreUsuario);
-                ps.setString(4, sobrenombre);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) maquinaIdDb = rs.getInt(1);
+                    if (rs.next()) {
+                        maquinaIdDb = rs.getInt(1);
+                    }
                 }
             }
-            // vincular tipo de proceso 2 (Renderizar KFN) en maquina_proceso
-            if (maquinaIdDb > 0) {
+            boolean nueva = maquinaIdDb <= 0;
+            if (nueva) {
+                String nombrePc;
+                try {
+                    nombrePc = InetAddress.getLocalHost().getHostName();
+                } catch (Exception e) {
+                    nombrePc = "kia-render";
+                }
+                String sobrenombre = nombrePc + " (" + System.getProperty("os.name", "") + ")";
                 try (PreparedStatement ps = cn.prepareStatement(
-                        "INSERT INTO maquina_proceso (maquina, tipoproceso, procesa, numejecuta) " +
-                        "VALUES (?, ?, true, 1) ON CONFLICT DO NOTHING")) {
-                    ps.setInt(1, maquinaIdDb);
-                    ps.setInt(2, TIPO_RENDERIZAR);  // tipo 2
-                    ps.executeUpdate();
+                        "INSERT INTO maquina (mac, nombre_pc, nombre_usuario, is_procesador, sobrenombre, usuario_id) "
+                        + "VALUES (?, ?, ?, true, ?, 1) RETURNING id")) {
+                    ps.setString(1, cfg.getMaquinaId());
+                    ps.setString(2, nombrePc);
+                    ps.setString(3, System.getProperty("user.name", "render"));
+                    ps.setString(4, sobrenombre);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            maquinaIdDb = rs.getInt(1);
+                        }
+                    }
                 }
             }
-            return true;
+            boolean vinculada = false;
+            if (maquinaIdDb > 0) {
+                // maquina_proceso no tiene llave unica (maquina_id, tipo_proceso_id): se revisa antes para no duplicar
+                try (PreparedStatement ps = cn.prepareStatement(
+                        "INSERT INTO maquina_proceso (maquina_id, tipo_proceso_id, procesa, numero_ejecuta) SELECT ?, ?, true, 1 "
+                        + "WHERE NOT EXISTS (SELECT 1 FROM maquina_proceso WHERE maquina_id = ? AND tipo_proceso_id = ?)")) {
+                    ps.setInt(1, maquinaIdDb);
+                    ps.setInt(2, TIPO_RENDERIZAR);
+                    ps.setInt(3, maquinaIdDb);
+                    ps.setInt(4, TIPO_RENDERIZAR);
+                    vinculada = ps.executeUpdate() > 0;
+                }
+            }
+            return new Registro(nueva, vinculada);
         } catch (Exception e) {
             log.warn("No se pudo verificar/registrar la maquina en la DB: {}", e.getMessage());
-            return false;
+            return new Registro(false, false);
         }
     }
 
